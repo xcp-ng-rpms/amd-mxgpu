@@ -1,0 +1,29 @@
+From a3f74923027693a7013c14caca3b56e6580fbbff Mon Sep 17 00:00:00 2001
+From: Yann Sionneau <yann.sionneau@vates.tech>
+Date: Tue, 29 Sep 2026 15:32:58 +0200
+Subject: [PATCH 2/2] Dont report Xen dom0 as a guest, it's the host
+
+This makes the driver probe correctly and create the VF
+which can then be passed-through to a guest
+
+Signed-off-by: Yann Sionneau <yann.sionneau@vates.tech>
+---
+ gim/gim_shim/gim_os_service.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/gim/gim_shim/gim_os_service.c b/gim/gim_shim/gim_os_service.c
+index c7e1a72..2b7fb6b 100644
+--- a/gim/gim_shim/gim_os_service.c
++++ b/gim/gim_shim/gim_os_service.c
+@@ -422,6 +422,8 @@ static int gim_pci_write_config_dword(oss_dev_t dev, int where, uint32_t val)
+ static bool gim_in_virtual_machine(void)
+ {
+ #ifdef CONFIG_X86
++	if (xen_initial_domain())
++		return false;
+ 	return boot_cpu_has(X86_FEATURE_HYPERVISOR);
+ #else
+ 	return false;
+-- 
+2.53.0
+
