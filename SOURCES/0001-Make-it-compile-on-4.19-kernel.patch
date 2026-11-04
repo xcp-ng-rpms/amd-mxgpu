@@ -1,0 +1,276 @@
+From 7ae24ee4c806300ddf7aee104e1933325194c8d5 Mon Sep 17 00:00:00 2001
+From: Yann Sionneau <yann.sionneau@vates.tech>
+Date: Thu, 30 Jul 2026 11:18:46 +0200
+Subject: [PATCH 1/2] Make it compile on 4.19 kernel
+
+Signed-off-by: Yann Sionneau <yann.sionneau@vates.tech>
+---
+ gim/Kbuild                         |  2 +-
+ gim/amd-vfio-pci/Kbuild            |  1 -
+ gim/dkms/m4/kernel.m4              |  2 +-
+ gim/gim_shim/dcore_drv.c           |  6 ++++--
+ gim/gim_shim/gim_drv.c             |  1 +
+ gim/gim_shim/gim_hbm_drv_mgmt.c    |  9 +++++++++
+ gim/gim_shim/gim_memory_sentinel.c | 23 +++++++++++++++++++----
+ gim/gim_shim/gim_os_service.c      |  8 +++++---
+ gim/gim_shim/sysfs/amdgv_cmd.c     |  2 +-
+ smi-lib/drv/core/smi_drv_utils.c   |  5 +++++
+ 10 files changed, 46 insertions(+), 13 deletions(-)
+
+diff --git a/gim/Kbuild b/gim/Kbuild
+index bf4af69..9c0b56f 100644
+--- a/gim/Kbuild
++++ b/gim/Kbuild
+@@ -15,7 +15,7 @@ subdir-ccflags-y += -I$(SMI_DRV_PATH)/inc -I$(SMI_DRV_PATH)/linux -I$(SMI_LIB_PA
+ subdir-ccflags-y += -I$(GIM_COMS_PATH)/inc
+ subdir-ccflags-y += -I$(src)/inc
+ subdir-ccflags-y += -include $(src)/dkms/config.h
+-subdir-ccflags-y += -Werror -Wimplicit-fallthrough=2 -Wno-enum-conversion -Wno-expansion-to-defined
++subdir-ccflags-y += -Wimplicit-fallthrough=2 -Wno-enum-conversion -Wno-expansion-to-defined
+ subdir-ccflags-y += -DAMDGV_UNIRAS_SUPPORT
+ subdir-ccflags-y += -DSHIM_LAYER_OSS_RADIX_TREE -DSHIM_LAYER_OSS_KFIFO -DSHIM_LAYER_OSS_MEMPOOL
+ 
+diff --git a/gim/amd-vfio-pci/Kbuild b/gim/amd-vfio-pci/Kbuild
+index 45adc54..bd9376d 100644
+--- a/gim/amd-vfio-pci/Kbuild
++++ b/gim/amd-vfio-pci/Kbuild
+@@ -4,7 +4,6 @@
+ 
+ subdir-ccflags-y := -include $(src)/../dkms/config.h
+ subdir-ccflags-y += -I$(src)/../inc
+-subdir-ccflags-y += -Werror -Wmissing-prototypes -Wimplicit-fallthrough=2 -Wno-enum-conversion -Wno-expansion-to-defined
+ 
+ amd-vfio-pci-y += amd-vfio.o
+ 
+diff --git a/gim/dkms/m4/kernel.m4 b/gim/dkms/m4/kernel.m4
+index 5dcde21..ac56b79 100644
+--- a/gim/dkms/m4/kernel.m4
++++ b/gim/dkms/m4/kernel.m4
+@@ -238,7 +238,7 @@ AC_DEFUN([AC_KERNEL_COMPILE_MODULE_IFELSE], [
+ 	test "x$enable_linux_builtin" = xyes && kbuild_src_flag='KBUILD_SRC=' # override KBUILD_SRC
+ 	test "x$enable_linux_builtin" = xyes && kbuild_additional_flag='sub_make_done=' # override sub_make_done
+ 	AS_IF(
+-		[AC_TRY_COMMAND(make [$2] -C $LINUX_OBJ EXTRA_CFLAGS="-Werror -Wno-error=uninitialized -Wno-error=unused-variable" M=$PWD $kbuild_src_flag $kbuild_additional_flag $kbuild_modpost_flag) >/dev/null && AC_TRY_COMMAND([$3])],
++		[AC_TRY_COMMAND(make [$2] -C $LINUX_OBJ EXTRA_CFLAGS="" M=$PWD $kbuild_src_flag $kbuild_additional_flag $kbuild_modpost_flag) >/dev/null && AC_TRY_COMMAND([$3])],
+ 		[$4],
+ 		[_AC_MSG_LOG_CONFTEST m4_ifvaln([$5],[$5])]
+ 	)
+diff --git a/gim/gim_shim/dcore_drv.c b/gim/gim_shim/dcore_drv.c
+index cf36634..29e6ccc 100644
+--- a/gim/gim_shim/dcore_drv.c
++++ b/gim/gim_shim/dcore_drv.c
+@@ -1374,7 +1374,7 @@ int dcore_iova_mmap(struct file *filp, struct vm_area_struct *vma)
+ 	for (i = 0; i < page_cnt; i++) {
+ 		guest_pfn[i] = vma->vm_pgoff + i;
+ 	}
+-
++#if 0
+ #if defined(HAVE_DCORE_IOVA_VM_CTX_VFIO_DEVICE)
+ 	vm_ctx->vdev = &vpdev->vdev;
+ #if !defined(HAVE_VFIO_DMA_UNMAP)
+@@ -1416,10 +1416,11 @@ int dcore_iova_mmap(struct file *filp, struct vm_area_struct *vma)
+ 	vma->vm_ops = &dcore_vma_ops;
+ 	vma->vm_private_data = (void *)vm_ctx;
+ 	vma->vm_flags |= VM_DONTEXPAND | VM_DONTDUMP | VM_PFNMAP;
+-
++#endif
+ 	return 0;
+ 
+ unreg:
++#if 0
+ #if defined(HAVE_DCORE_IOVA_VM_CTX_VFIO_DEVICE)
+ #if !defined(HAVE_VFIO_DMA_UNMAP)
+ 	vfio_unregister_notifier(vm_ctx->vdev, VFIO_IOMMU_NOTIFY,
+@@ -1429,6 +1430,7 @@ unreg:
+ 	vfio_unregister_notifier(&vm_ctx->pdev->dev, VFIO_IOMMU_NOTIFY,
+ 			&vm_ctx->vfio_notifier);
+ #endif
++#endif
+ 
+ failed:
+ 	if (vm_ctx)
+diff --git a/gim/gim_shim/gim_drv.c b/gim/gim_shim/gim_drv.c
+index 4f6c38d..a414dcc 100644
+--- a/gim/gim_shim/gim_drv.c
++++ b/gim/gim_shim/gim_drv.c
+@@ -14,6 +14,7 @@
+ #include <linux/kthread.h>
+ #include <linux/version.h>
+ #include "gim_live_update.h"
++#include <acpi/acpi_numa.h>
+ 
+ #include <linux/ftrace.h>
+ #include "gim_ftrace.h"
+diff --git a/gim/gim_shim/gim_hbm_drv_mgmt.c b/gim/gim_shim/gim_hbm_drv_mgmt.c
+index ecdb094..104ea4f 100644
+--- a/gim/gim_shim/gim_hbm_drv_mgmt.c
++++ b/gim/gim_shim/gim_hbm_drv_mgmt.c
+@@ -47,6 +47,11 @@ static int gim_hbm_drv_mgmt_add_memory(struct gim_hbm_drv_mgmt_t *ctx)
+ {
+ 	int ret;
+ 
++	panic("we went through an unsupported code path!\n");
++	/* Add memory to NUMA node as driver-managed */
++	ret = 0;
++// add_memory_driver_managed is not available on 4.19 kernel
++#if 0
+ 	ret = add_memory_driver_managed(ctx->numa_id, ctx->phy_addr, ctx->phy_size,
+ 					ctx->name, MHP_MEMMAP_ON_MEMORY);
+ 	if (ret == -EINVAL) {
+@@ -55,6 +60,7 @@ static int gim_hbm_drv_mgmt_add_memory(struct gim_hbm_drv_mgmt_t *ctx)
+ 		ret = add_memory_driver_managed(ctx->numa_id, ctx->phy_addr, ctx->phy_size,
+ 						ctx->name, MHP_NONE);
+ 	}
++#endif
+ 
+ 	return ret;
+ }
+@@ -191,6 +197,8 @@ void gim_hbm_drv_mgmt_fini(void *hbm_drv_mgmt)
+ 	if (ctx != NULL) {
+ 		cancel_delayed_work_sync(&ctx->reg_work);
+ 		if (ctx->registered) {
++#if 0
++// on 4.19 kernel remove_memory needs a NID parameter
+ 			int ret;
+ 
+ 			ret = remove_memory(ctx->phy_addr, ctx->phy_size);
+@@ -201,6 +209,7 @@ void gim_hbm_drv_mgmt_fini(void *hbm_drv_mgmt)
+ 				gim_info("%s: Successfully removed HBM memory region start=0x%llx, size=0x%llx from NUMA node %d\n",
+ 					 ctx->name, ctx->phy_addr, ctx->phy_size, ctx->numa_id);
+ 			}
++#endif
+ 		}
+ 		kfree(ctx);
+ 	}
+diff --git a/gim/gim_shim/gim_memory_sentinel.c b/gim/gim_shim/gim_memory_sentinel.c
+index 2a49699..f3cb475 100644
+--- a/gim/gim_shim/gim_memory_sentinel.c
++++ b/gim/gim_shim/gim_memory_sentinel.c
+@@ -9,6 +9,7 @@
+ #include <linux/slab.h>
+ #include <linux/mm.h>
+ #include <linux/overflow.h>
++#include <linux/uaccess.h>
+ 
+ #include "gim_debug.h"
+ #include "gim_config.h"
+@@ -586,6 +587,20 @@ static void *gim_sentinel_malloc_helper(void *ptr, size_t size, uint64_t alloc_f
+ 	return ret_ptr;
+ }
+ 
++unsigned int stack_trace_save(unsigned long *store, unsigned int size,
++			      unsigned int skipnr)
++{
++	struct stack_trace trace = {
++		.entries	= store,
++		.max_entries	= size,
++		.skip		= skipnr + 1,
++	};
++
++	save_stack_trace(&trace);
++	return trace.nr_entries;
++}
++EXPORT_SYMBOL_GPL(stack_trace_save);
++
+ static inline unsigned long gim_sentinel_get_allocate_stack(void)
+ {
+ 	unsigned long entries[GIM_MEMORY_SENTINEL_SAVE_STACK_BUFFER_SIZE];
+@@ -682,7 +697,7 @@ static void *gim_sentinel_vmalloc(size_t size)
+ 	void *ptr;
+ 	unsigned long record_entry;
+ 
+-	if (size > (totalram_pages() << PAGE_SHIFT)) {
++	if (size > (totalram_pages << PAGE_SHIFT)) {
+ 		gim_warn("alloc size %ld bigger than total ram, return NULL\n", size);
+ 		return NULL;
+ 	}
+@@ -711,7 +726,7 @@ static void *gim_sentinel_vzalloc(size_t size)
+ 	void *ptr;
+ 	unsigned long record_entry;
+ 
+-	if (size > (totalram_pages() << PAGE_SHIFT)) {
++	if (size > (totalram_pages << PAGE_SHIFT)) {
+ 		gim_warn("alloc size %ld bigger than total ram, return NULL\n", size);
+ 		return NULL;
+ 	}
+@@ -846,7 +861,7 @@ static void gim_memory_sentinel_free_by_checktable(struct gim_memory_sentinel_ma
+ static bool __gim_memory_sentinel_header_accessible(void *header)
+ {
+ 	char buffer[sizeof(struct gim_memory_sentinel_malloc_header)];
+-	return !copy_from_kernel_nofault(buffer, header, sizeof(buffer));
++	return !probe_kernel_read(buffer, header, sizeof(buffer));
+ }
+ 
+ static void *gim_sentinel_free_helper(const void *p)
+@@ -964,4 +979,4 @@ void gim_sentinel_secure_kfree(const void *p)
+ #endif
+ 		gim_dbg("[%s] secure free allc_ptr 0x%016llx successful, user ptr: 0x%016llx\n", __func__, (uint64_t)alloc_ptr, (uint64_t)p);
+ 	}
+-}
+\ No newline at end of file
++}
+diff --git a/gim/gim_shim/gim_os_service.c b/gim/gim_shim/gim_os_service.c
+index 38cec6d..c7e1a72 100644
+--- a/gim/gim_shim/gim_os_service.c
++++ b/gim/gim_shim/gim_os_service.c
+@@ -116,7 +116,8 @@ struct gim_mce_mgr {
+ struct gim_mce_mgr  g_gim_mce_mgr = {
+ 	.nb = {
+ 		.notifier_call = gim_mce_notifier,
+-		.priority = MCE_PRIO_UC,
++// MCE_PRIO_UC does not exist on 4.19 kernel
++		.priority = MCE_PRIO_LOWEST,
+ 	},
+ };
+ 
+@@ -2233,7 +2234,8 @@ static void gim_dump_stack(void)
+ 
+ static int gim_access_ok(const void *ptr, unsigned long size)
+ {
+-	return access_ok(ptr, size);
++// on 4.19 kernel access_ok takes an extra read/write argument
++	return access_ok(VERIFY_WRITE, ptr, size);
+ }
+ 
+ static int gim_copy_from_user(void *to, const void *from, uint32_t size)
+@@ -2740,7 +2742,7 @@ static int gim_set_dma_mask(oss_dev_t dev, uint32_t bits)
+ #ifdef SHIM_LAYER_OSS_RADIX_TREE
+ static void gim_radix_tree_init(void *root)
+ {
+-	INIT_RADIX_TREE(root, GFP_KERNEL);
++	INIT_RADIX_TREE((struct radix_tree_root *)root, GFP_KERNEL);
+ }
+ 
+ static void  gim_radix_tree_fini(void *root)
+diff --git a/gim/gim_shim/sysfs/amdgv_cmd.c b/gim/gim_shim/sysfs/amdgv_cmd.c
+index 5c01c52..4513b48 100644
+--- a/gim/gim_shim/sysfs/amdgv_cmd.c
++++ b/gim/gim_shim/sysfs/amdgv_cmd.c
+@@ -58,7 +58,7 @@ static int amdgv_ras_ioctl_handler(struct file *file, unsigned int cmd, unsigned
+ 
+ 	if (ras_ioctl_cmd.cmd_buf_size &&
+ 	    ras_ioctl_cmd.cmd_buf_ptr &&
+-	    !access_ok((void __user *)ras_ioctl_cmd.cmd_buf_ptr, ras_ioctl_cmd.cmd_buf_size)) {
++	    !access_ok(VERIFY_WRITE, (void __user *)ras_ioctl_cmd.cmd_buf_ptr, ras_ioctl_cmd.cmd_buf_size)) {
+ 		gim_warn("Invaild command buffer memory!\n");
+ 		return -EINVAL;
+ 	}
+diff --git a/smi-lib/drv/core/smi_drv_utils.c b/smi-lib/drv/core/smi_drv_utils.c
+index ae43122..dd1ceff 100644
+--- a/smi-lib/drv/core/smi_drv_utils.c
++++ b/smi-lib/drv/core/smi_drv_utils.c
+@@ -14,6 +14,11 @@
+ 	#include <limits.h>
+ #endif
+ 
++// needed for 4.19 kernel
++#ifndef INT_MAX
++#define INT_MAX          __INT_MAX__
++#endif
++
+ uint64_t smi_eeprom_to_utc_format(uint64_t eeprom_timestamp)
+ {
+ 	uint64_t year, month, day, hour, minute, second;
+-- 
+2.53.0
+
