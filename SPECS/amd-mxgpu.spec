@@ -20,8 +20,9 @@ Release: .1
 License: MIT
 Source0: MxGPU-Virtualization-9.3.0.K.tar.gz
 
-Patch0: 0001-Dont-report-Xen-dom0-as-a-guest-it-s-the-host.patch
-Patch1: 0002-Add-xarray-kcompat-layer.patch
+Patch0: 0001-Make-it-compile-on-4.19-kernel.patch
+Patch1: 0002-Dont-report-Xen-dom0-as-a-guest-it-s-the-host.patch
+Patch2: 0003-Add-xarray-kcompat-layer.patch
 
 BuildRequires: devtoolset-11-gcc
 BuildRequires: kernel-devel

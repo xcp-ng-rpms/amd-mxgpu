@@ -1,7 +1,7 @@
 From 935d1f9c2aa78f9798c7c8799219d928a1fd77f4 Mon Sep 17 00:00:00 2001
 From: Yann Sionneau <yann.sionneau@vates.tech>
 Date: Thu, 12 Nov 2026 16:08:37 +0100
-Subject: [PATCH 2/2] Add xarray kcompat layer
+Subject: [PATCH 3/3] Add xarray kcompat layer
 
 ---
  gim/gim_shim/Kbuild           |    1 +

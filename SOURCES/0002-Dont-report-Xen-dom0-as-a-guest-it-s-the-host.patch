@@ -1,7 +1,7 @@
 From a3f74923027693a7013c14caca3b56e6580fbbff Mon Sep 17 00:00:00 2001
 From: Yann Sionneau <yann.sionneau@vates.tech>
 Date: Tue, 29 Sep 2026 15:32:58 +0200
-Subject: [PATCH 1/2] Dont report Xen dom0 as a guest, it's the host
+Subject: [PATCH 2/3] Dont report Xen dom0 as a guest, it's the host
 
 This makes the driver probe correctly and create the VF
 which can then be passed-through to a guest
