@@ -16,7 +16,7 @@
 Summary: %{vendor_name} %{driver_name} device drivers
 Name: %{vendor_label}-%{driver_name}
 Version: 9.4.0.K
-Release: .1
+Release: .1.0.mxgpu.1
 License: MIT
 Source0: MxGPU-Virtualization-9.4.0.K.tar.gz
 
