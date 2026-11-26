@@ -15,10 +15,10 @@
 
 Summary: %{vendor_name} %{driver_name} device drivers
 Name: %{vendor_label}-%{driver_name}
-Version: 9.3.0.K
+Version: 9.4.0.K
 Release: .1
 License: MIT
-Source0: MxGPU-Virtualization-9.3.0.K.tar.gz
+Source0: MxGPU-Virtualization-9.4.0.K.tar.gz
 
 Patch0: 0001-Make-it-compile-on-4.19-kernel.patch
 Patch1: 0002-Dont-report-Xen-dom0-as-a-guest-it-s-the-host.patch
@@ -38,7 +38,7 @@ Requires(postun): /usr/sbin/depmod
 version %{kernel_version}.
 
 %prep
-%autosetup -p1 -n MxGPU-Virtualization-9.3.0.K
+%autosetup -p1 -n MxGPU-Virtualization-9.4.0.K
 
 %build
 source /opt/rh/devtoolset-11/enable
@@ -72,5 +72,7 @@ find . -name "*.ko" -exec mv '{}' %{buildroot}/lib/modules/%{kernel_version}/%{m
 /lib/modules/%{kernel_version}/*/*.ko
 
 %changelog
+* Thu Nov 26 2026 Yann Sionneau <yann.sionneua@vates.tech> - 9.4.0.K.1
+- Update to new 9.4.0.K AMD release
 * Thu Nov 04 2026 Yann Sionneau <yann.sionneau@vates.tech> - 9.3.0.K.1
 - First import of AMD MxGPU release 9.3.0.K

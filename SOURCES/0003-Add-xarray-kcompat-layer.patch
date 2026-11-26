@@ -1,4 +1,4 @@
-From 935d1f9c2aa78f9798c7c8799219d928a1fd77f4 Mon Sep 17 00:00:00 2001
+From 9b469162f3a711373b5905bb429faff118fc4e56 Mon Sep 17 00:00:00 2001
 From: Yann Sionneau <yann.sionneau@vates.tech>
 Date: Thu, 12 Nov 2026 16:08:37 +0100
 Subject: [PATCH 3/3] Add xarray kcompat layer
@@ -18,7 +18,7 @@ Subject: [PATCH 3/3] Add xarray kcompat layer
  create mode 100644 gim/kcompat_xarray.c
 
 diff --git a/gim/gim_shim/Kbuild b/gim/gim_shim/Kbuild
-index 630988a..75013c9 100644
+index 24386a3..c508900 100644
 --- a/gim/gim_shim/Kbuild
 +++ b/gim/gim_shim/Kbuild
 @@ -23,3 +23,4 @@ gim-y += gim_shim/sysfs/gim_guard.o
@@ -27,10 +27,10 @@ index 630988a..75013c9 100644
  gim-y += gim_shim/sysfs/amdgv_uniras_cmd.o
 +gim-y += kcompat_xarray.o
 diff --git a/gim/gim_shim/gim_drv.c b/gim/gim_shim/gim_drv.c
-index a414dcc..d4c9804 100644
+index 02c74a9..f92138b 100644
 --- a/gim/gim_shim/gim_drv.c
 +++ b/gim/gim_shim/gim_drv.c
-@@ -39,6 +39,8 @@
+@@ -44,6 +44,8 @@
  #include "gim_debugfs.h"
  #include "gim_monitor.h"
  
@@ -40,7 +40,7 @@ index a414dcc..d4c9804 100644
  	void *pdev;
  	const void *ent;
 diff --git a/gim/gim_shim/gim_os_service.c b/gim/gim_shim/gim_os_service.c
-index 2b7fb6b..a08949b 100644
+index b670d27..4ef8a0f 100644
 --- a/gim/gim_shim/gim_os_service.c
 +++ b/gim/gim_shim/gim_os_service.c
 @@ -63,7 +63,6 @@
@@ -51,8 +51,8 @@ index 2b7fb6b..a08949b 100644
  #include "amdgv_oss.h"
  #include "gim_debug.h"
  #include "gim_config.h"
-@@ -73,6 +72,8 @@
- #include "gim_hbm_dax.h"
+@@ -72,6 +71,8 @@
+ 
  #include "gim_hbm_drv_mgmt.h"
  
 +#include "kcompat.h"

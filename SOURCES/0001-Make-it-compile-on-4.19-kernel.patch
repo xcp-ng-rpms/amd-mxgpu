@@ -1,4 +1,4 @@
-From 7ae24ee4c806300ddf7aee104e1933325194c8d5 Mon Sep 17 00:00:00 2001
+From dafecabb3fbd2328b099ef27c8e7ab1fa004ea9c Mon Sep 17 00:00:00 2001
 From: Yann Sionneau <yann.sionneau@vates.tech>
 Date: Thu, 30 Jul 2026 11:18:46 +0200
 Subject: [PATCH 1/3] Make it compile on 4.19 kernel
@@ -6,7 +6,7 @@ Subject: [PATCH 1/3] Make it compile on 4.19 kernel
 Signed-off-by: Yann Sionneau <yann.sionneau@vates.tech>
 ---
  gim/Kbuild                         |  2 +-
- gim/amd-vfio-pci/Kbuild            |  1 -
+ gim/amd-vfio-pci/Kbuild            |  2 +-
  gim/dkms/m4/kernel.m4              |  2 +-
  gim/gim_shim/dcore_drv.c           |  6 ++++--
  gim/gim_shim/gim_drv.c             |  1 +
@@ -15,10 +15,10 @@ Signed-off-by: Yann Sionneau <yann.sionneau@vates.tech>
  gim/gim_shim/gim_os_service.c      |  8 +++++---
  gim/gim_shim/sysfs/amdgv_cmd.c     |  2 +-
  smi-lib/drv/core/smi_drv_utils.c   |  5 +++++
- 10 files changed, 46 insertions(+), 13 deletions(-)
+ 10 files changed, 47 insertions(+), 13 deletions(-)
 
 diff --git a/gim/Kbuild b/gim/Kbuild
-index bf4af69..9c0b56f 100644
+index bb3bb14..0b0033f 100644
 --- a/gim/Kbuild
 +++ b/gim/Kbuild
 @@ -15,7 +15,7 @@ subdir-ccflags-y += -I$(SMI_DRV_PATH)/inc -I$(SMI_DRV_PATH)/linux -I$(SMI_LIB_PA
@@ -27,26 +27,27 @@ index bf4af69..9c0b56f 100644
  subdir-ccflags-y += -include $(src)/dkms/config.h
 -subdir-ccflags-y += -Werror -Wimplicit-fallthrough=2 -Wno-enum-conversion -Wno-expansion-to-defined
 +subdir-ccflags-y += -Wimplicit-fallthrough=2 -Wno-enum-conversion -Wno-expansion-to-defined
+ subdir-ccflags-y += -Wformat -Wformat-security -Werror=format-security
  subdir-ccflags-y += -DAMDGV_UNIRAS_SUPPORT
  subdir-ccflags-y += -DSHIM_LAYER_OSS_RADIX_TREE -DSHIM_LAYER_OSS_KFIFO -DSHIM_LAYER_OSS_MEMPOOL
- 
 diff --git a/gim/amd-vfio-pci/Kbuild b/gim/amd-vfio-pci/Kbuild
-index 45adc54..bd9376d 100644
+index f33f3ad..689c4aa 100644
 --- a/gim/amd-vfio-pci/Kbuild
 +++ b/gim/amd-vfio-pci/Kbuild
-@@ -4,7 +4,6 @@
+@@ -4,7 +4,7 @@
  
  subdir-ccflags-y := -include $(src)/../dkms/config.h
  subdir-ccflags-y += -I$(src)/../inc
 -subdir-ccflags-y += -Werror -Wmissing-prototypes -Wimplicit-fallthrough=2 -Wno-enum-conversion -Wno-expansion-to-defined
++subdir-ccflags-y += -Wmissing-prototypes -Wimplicit-fallthrough=2 -Wno-enum-conversion -Wno-expansion-to-defined
+ subdir-ccflags-y += -Wformat -Wformat-security -Werror=format-security
  
  amd-vfio-pci-y += amd-vfio.o
- 
 diff --git a/gim/dkms/m4/kernel.m4 b/gim/dkms/m4/kernel.m4
-index 5dcde21..ac56b79 100644
+index 8039f1f..d157089 100644
 --- a/gim/dkms/m4/kernel.m4
 +++ b/gim/dkms/m4/kernel.m4
-@@ -238,7 +238,7 @@ AC_DEFUN([AC_KERNEL_COMPILE_MODULE_IFELSE], [
+@@ -239,7 +239,7 @@ AC_DEFUN([AC_KERNEL_COMPILE_MODULE_IFELSE], [
  	test "x$enable_linux_builtin" = xyes && kbuild_src_flag='KBUILD_SRC=' # override KBUILD_SRC
  	test "x$enable_linux_builtin" = xyes && kbuild_additional_flag='sub_make_done=' # override sub_make_done
  	AS_IF(
@@ -56,7 +57,7 @@ index 5dcde21..ac56b79 100644
  		[_AC_MSG_LOG_CONFTEST m4_ifvaln([$5],[$5])]
  	)
 diff --git a/gim/gim_shim/dcore_drv.c b/gim/gim_shim/dcore_drv.c
-index cf36634..29e6ccc 100644
+index 97274f4..e2619f2 100644
 --- a/gim/gim_shim/dcore_drv.c
 +++ b/gim/gim_shim/dcore_drv.c
 @@ -1374,7 +1374,7 @@ int dcore_iova_mmap(struct file *filp, struct vm_area_struct *vma)
@@ -90,22 +91,22 @@ index cf36634..29e6ccc 100644
  failed:
  	if (vm_ctx)
 diff --git a/gim/gim_shim/gim_drv.c b/gim/gim_shim/gim_drv.c
-index 4f6c38d..a414dcc 100644
+index 86558c6..02c74a9 100644
 --- a/gim/gim_shim/gim_drv.c
 +++ b/gim/gim_shim/gim_drv.c
-@@ -14,6 +14,7 @@
- #include <linux/kthread.h>
+@@ -18,6 +18,7 @@
  #include <linux/version.h>
+ #include <linux/io.h>
  #include "gim_live_update.h"
 +#include <acpi/acpi_numa.h>
  
  #include <linux/ftrace.h>
  #include "gim_ftrace.h"
 diff --git a/gim/gim_shim/gim_hbm_drv_mgmt.c b/gim/gim_shim/gim_hbm_drv_mgmt.c
-index ecdb094..104ea4f 100644
+index 0489bfd..3b6785b 100644
 --- a/gim/gim_shim/gim_hbm_drv_mgmt.c
 +++ b/gim/gim_shim/gim_hbm_drv_mgmt.c
-@@ -47,6 +47,11 @@ static int gim_hbm_drv_mgmt_add_memory(struct gim_hbm_drv_mgmt_t *ctx)
+@@ -50,6 +50,11 @@ static int gim_hbm_drv_mgmt_add_memory(struct gim_hbm_drv_mgmt_t *ctx)
  {
  	int ret;
  
@@ -117,7 +118,7 @@ index ecdb094..104ea4f 100644
  	ret = add_memory_driver_managed(ctx->numa_id, ctx->phy_addr, ctx->phy_size,
  					ctx->name, MHP_MEMMAP_ON_MEMORY);
  	if (ret == -EINVAL) {
-@@ -55,6 +60,7 @@ static int gim_hbm_drv_mgmt_add_memory(struct gim_hbm_drv_mgmt_t *ctx)
+@@ -58,6 +63,7 @@ static int gim_hbm_drv_mgmt_add_memory(struct gim_hbm_drv_mgmt_t *ctx)
  		ret = add_memory_driver_managed(ctx->numa_id, ctx->phy_addr, ctx->phy_size,
  						ctx->name, MHP_NONE);
  	}
@@ -125,7 +126,7 @@ index ecdb094..104ea4f 100644
  
  	return ret;
  }
-@@ -191,6 +197,8 @@ void gim_hbm_drv_mgmt_fini(void *hbm_drv_mgmt)
+@@ -225,6 +231,8 @@ void gim_hbm_drv_mgmt_fini(void *hbm_drv_mgmt)
  	if (ctx != NULL) {
  		cancel_delayed_work_sync(&ctx->reg_work);
  		if (ctx->registered) {
@@ -134,7 +135,7 @@ index ecdb094..104ea4f 100644
  			int ret;
  
  			ret = remove_memory(ctx->phy_addr, ctx->phy_size);
-@@ -201,6 +209,7 @@ void gim_hbm_drv_mgmt_fini(void *hbm_drv_mgmt)
+@@ -235,6 +243,7 @@ void gim_hbm_drv_mgmt_fini(void *hbm_drv_mgmt)
  				gim_info("%s: Successfully removed HBM memory region start=0x%llx, size=0x%llx from NUMA node %d\n",
  					 ctx->name, ctx->phy_addr, ctx->phy_size, ctx->numa_id);
  			}
@@ -210,10 +211,10 @@ index 2a49699..f3cb475 100644
 \ No newline at end of file
 +}
 diff --git a/gim/gim_shim/gim_os_service.c b/gim/gim_shim/gim_os_service.c
-index 38cec6d..c7e1a72 100644
+index 68beed2..0e74f9f 100644
 --- a/gim/gim_shim/gim_os_service.c
 +++ b/gim/gim_shim/gim_os_service.c
-@@ -116,7 +116,8 @@ struct gim_mce_mgr {
+@@ -115,7 +115,8 @@ struct gim_mce_mgr {
  struct gim_mce_mgr  g_gim_mce_mgr = {
  	.nb = {
  		.notifier_call = gim_mce_notifier,
@@ -223,7 +224,7 @@ index 38cec6d..c7e1a72 100644
  	},
  };
  
-@@ -2233,7 +2234,8 @@ static void gim_dump_stack(void)
+@@ -2230,7 +2231,8 @@ static void gim_dump_stack(void)
  
  static int gim_access_ok(const void *ptr, unsigned long size)
  {
@@ -233,7 +234,7 @@ index 38cec6d..c7e1a72 100644
  }
  
  static int gim_copy_from_user(void *to, const void *from, uint32_t size)
-@@ -2740,7 +2742,7 @@ static int gim_set_dma_mask(oss_dev_t dev, uint32_t bits)
+@@ -2737,7 +2739,7 @@ static int gim_set_dma_mask(oss_dev_t dev, uint32_t bits)
  #ifdef SHIM_LAYER_OSS_RADIX_TREE
  static void gim_radix_tree_init(void *root)
  {
@@ -243,7 +244,7 @@ index 38cec6d..c7e1a72 100644
  
  static void  gim_radix_tree_fini(void *root)
 diff --git a/gim/gim_shim/sysfs/amdgv_cmd.c b/gim/gim_shim/sysfs/amdgv_cmd.c
-index 5c01c52..4513b48 100644
+index f1b623f..6cb8601 100644
 --- a/gim/gim_shim/sysfs/amdgv_cmd.c
 +++ b/gim/gim_shim/sysfs/amdgv_cmd.c
 @@ -58,7 +58,7 @@ static int amdgv_ras_ioctl_handler(struct file *file, unsigned int cmd, unsigned
@@ -256,7 +257,7 @@ index 5c01c52..4513b48 100644
  		return -EINVAL;
  	}
 diff --git a/smi-lib/drv/core/smi_drv_utils.c b/smi-lib/drv/core/smi_drv_utils.c
-index ae43122..dd1ceff 100644
+index 2ff18fb..41ab6d9 100644
 --- a/smi-lib/drv/core/smi_drv_utils.c
 +++ b/smi-lib/drv/core/smi_drv_utils.c
 @@ -14,6 +14,11 @@
